@@ -67,6 +67,20 @@ export class QQBotApi {
   }
 
   /**
+   * 发送delete请求
+   * @param path 请求路径
+   */
+  async delete<T> (path: string): Promise<T> {
+    try {
+      const { data } = await this.axios.delete(path)
+      return data
+    } catch (error) {
+      this.handleError(path, {}, error)
+      throw error
+    }
+  }
+
+  /**
    * 处理请求错误
    * @param error 错误信息
    */
@@ -277,14 +291,14 @@ export class QQBotApi {
     } else if (type === 'group') {
       url = `/v2/groups/${targetId}/messages/${messageId}`
     } else if (type === 'channels') {
-      url = ` /channels/${targetId}/messages/${messageId}?hidetip=${hidetip}`
+      url = `/channels/${targetId}/messages/${messageId}?hidetip=${hidetip}`
     } else if (type === 'dms') {
       url = `/dms/${targetId}/messages/${messageId}?hidetip=${hidetip}`
     } else {
       throw new Error('未知的撤回消息类型')
     }
 
-    return this.get(url).then(() => true).catch(() => false)
+    return this.delete(url).then(() => true).catch(() => false)
   }
 
   /**

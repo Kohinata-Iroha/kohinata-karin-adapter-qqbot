@@ -110,23 +110,39 @@ export abstract class AdapterQQBot extends AdapterBase {
    */
   async recallMsg (contact: Contact, messageId: string): Promise<void> {
     try {
+      let success = false
+      const sceneLabel = (() => {
+        if (contact.scene === 'friend') return '好友撤回'
+        if (contact.scene === 'group') return '群聊撤回'
+        if (contact.scene === 'direct') return '频道私信撤回'
+        if (contact.scene === 'guild') return '频道撤回'
+        return `${contact.scene}撤回`
+      })()
+      const peerDisplay = (() => {
+        if (contact.scene === 'guild') return `${contact.peer}-${contact.subPeer ?? ''}`
+        return `${contact.peer}`
+      })()
+
       if (contact.scene === 'friend') {
-        await this.super.recallMsg('user', contact.peer, messageId)
-        return
+        success = await this.super.recallMsg('user', contact.peer, messageId)
+      } else if (contact.scene === 'group') {
+        success = await this.super.recallMsg('group', contact.peer, messageId)
+      } else if (contact.scene === 'direct') {
+        success = await this.super.recallMsg('dms', contact.peer, messageId)
+      } else if (contact.scene === 'guild') {
+        const channelId = contact.subPeer
+        if (channelId) {
+          success = await this.super.recallMsg('channels', channelId, messageId)
+        } else {
+          logger.error('撤回消息失败: 缺少ID', contact)
+        }
       }
 
-      if (contact.scene === 'group') {
-        await this.super.recallMsg('group', contact.peer, messageId)
-        return
-      }
-
-      if (contact.scene === 'direct') {
-        await this.super.recallMsg('dms', contact.peer, messageId)
-        return
-      }
-
-      if (contact.scene === 'guild') {
-        await this.super.recallMsg('channels', contact.peer, messageId)
+      const logMsg = `${sceneLabel}: [${peerDisplay}][${messageId}] ${success ? '撤回成功' : '撤回失败'}`
+      if (success) this.logger('info', logMsg)
+      else {
+        this.logger('warn', logMsg)
+        throw new Error('撤回失败')
       }
     } catch (error) {
       logger.error('撤回消息失败:', error)

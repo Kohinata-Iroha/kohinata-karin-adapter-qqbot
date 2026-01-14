@@ -114,9 +114,9 @@ export const createWebSocketConnection = async (
             socket?.close()
 
             if (isClose) {
-              logger.warn('[QQBot]', `${appid}: WebSocket连接已主动关闭`)
+              logger.debug('[QQBot]', `${appid}: WebSocket连接已主动关闭`)
             } else {
-              logger.error('[QQBot]', `${appid}: WebSocket连接已断开`)
+              logger.debug('[QQBot]', `${appid}: WebSocket连接已断开`)
             }
           } finally {
             const ws = cache.get(appid)
@@ -209,6 +209,31 @@ export const createWebSocketConnection = async (
 /**
  * 处理WebSocket消息
  */
+const buildIntents = (cfg: QQBotConfig): number => {
+  let intents = 0
+
+  // 基礎事件：Guild / 成員 / DM / 群&單聊
+  // GUILDS
+  intents |= 1 << 0
+  // GUILD_MEMBERS
+  intents |= 1 << 1
+  // DIRECT_MESSAGE
+  intents |= 1 << 12
+  // GROUP_AND_C2C_EVENT
+  intents |= 1 << 25
+
+  // 文字子頻道消息：根據 guildMode 決定使用公域或私域事件
+  if (cfg.guildMode === 1) {
+    // 私域：GUILD_MESSAGES -> MESSAGE_CREATE
+    intents |= 1 << 9
+  } else {
+    // 公域：PUBLIC_GUILD_MESSAGES -> AT_MESSAGE_CREATE
+    intents |= 1 << 30
+  }
+
+  return intents
+}
+
 const handleWebSocketMessage = (
   config: QQBotConfig,
   client: AdapterQQBotNormal | AdapterQQBotMarkdown,
@@ -239,7 +264,8 @@ const handleWebSocketMessage = (
         op: Opcode.Identify,
         d: {
           token: `QQBot ${accessToken}`,
-          intents: 33558531, // 订阅所有必需的事件 (1|1<<1|1<<9|1<<10|1<<12|1<<25|1<<26|1<<27|1<<28|1<<29|1<<30)
+          // 根據配置動態構建 intents，確保開啟文字子頻道消息事件
+          intents: buildIntents(config),
           shard: [0, 1],
           properties: {
             $os: 'linux',

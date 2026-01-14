@@ -112,6 +112,8 @@ export const enum EventEnum {
   DIRECT_MESSAGE_DELETE = 'DIRECT_MESSAGE_DELETE',
   /** 用户单聊发消息给机器人时候 */
   C2C_MESSAGE_CREATE = 'C2C_MESSAGE_CREATE',
+  /** 用户单聊撤回消息事件 */
+  C2C_MESSAGE_DELETE = 'C2C_MESSAGE_DELETE',
   /** 用户添加使用机器人 */
   FRIEND_ADD = 'FRIEND_ADD',
   /** 用户删除机器人 */
@@ -122,6 +124,8 @@ export const enum EventEnum {
   C2C_MSG_RECEIVE = 'C2C_MSG_RECEIVE',
   /** 用户在群里@机器人时收到的消息 */
   GROUP_AT_MESSAGE_CREATE = 'GROUP_AT_MESSAGE_CREATE',
+  /** 群聊撤回消息事件 */
+  GROUP_AT_MESSAGE_DELETE = 'GROUP_AT_MESSAGE_DELETE',
   /** 机器人被添加到群聊 */
   GROUP_ADD_ROBOT = 'GROUP_ADD_ROBOT',
   /** 机器人被移出群聊 */
@@ -267,6 +271,72 @@ export interface GroupMsgEvent extends BaseEvent {
 }
 
 /**
+ * C2C_MESSAGE_DELETE子事件（好友撤回）
+ */
+export interface C2CMessageDeleteEvent extends BaseEvent {
+  /** 事件类型 */
+  t: EventEnum.C2C_MESSAGE_DELETE,
+  /** 平台方事件ID */
+  id: string,
+  d: {
+    /** 消息信息 */
+    message: {
+      /** 发送者信息 */
+      author: {
+        /** 发送者的id */
+        id: string,
+        /** 发送者的user_openid */
+        user_openid: string
+      },
+      /** 消息ID message_id */
+      id: string,
+      /** 消息发送时间 */
+      timestamp: string
+    },
+    /** 操作者信息 */
+    op_user: {
+      /** 操作者的id */
+      id: string
+    }
+  }
+}
+
+/**
+ * GROUP_AT_MESSAGE_DELETE子事件（群聊撤回）
+ */
+export interface GroupMessageDeleteEvent extends BaseEvent {
+  /** 事件类型 */
+  t: EventEnum.GROUP_AT_MESSAGE_DELETE,
+  /** 平台方事件ID */
+  id: string,
+  d: {
+    /** 消息信息 */
+    message: {
+      /** 发送者信息 */
+      author: {
+        /** 发送者的id */
+        id: string,
+        /** 发送者的member_openid */
+        member_openid: string
+      },
+      /** 群ID group_id */
+      group_id: string,
+      /** 群openid group_openid */
+      group_openid: string,
+      /** 消息ID message_id */
+      id: string,
+      /** 消息发送时间 */
+      timestamp: string
+    },
+    /** 操作者信息 */
+    op_user: {
+      /** 操作者的id */
+      id: string
+    }
+  }
+}
+
+/**
  * 频道的user信息
  */
 export interface GuildUser {
@@ -345,6 +415,26 @@ export interface GuildMsgEvent extends BaseEvent {
 }
 
 /**
+ * 频道消息撤回事件（私域）
+ */
+export interface GuildMessageDeleteEvent extends BaseEvent {
+  /** 事件类型 */
+  t: EventEnum.MESSAGE_DELETE,
+  /** 事件内容 */
+  d: any
+}
+
+/**
+ * 频道消息撤回事件（公域）
+ */
+export interface PublicMessageDeleteEvent extends BaseEvent {
+  /** 事件类型 */
+  t: EventEnum.PUBLIC_MESSAGE_DELETE,
+  /** 事件内容 */
+  d: any
+}
+
+/**
  * 频道私信消息
  */
 export interface DirectMsgEvent extends BaseEvent {
@@ -361,6 +451,16 @@ export interface DirectMsgEvent extends BaseEvent {
     /** 未知字段 */
     seq_in_channel: string
   }
+}
+
+/**
+ * 频道私信撤回事件
+ */
+export interface DirectMessageDeleteEvent extends BaseEvent {
+  /** 事件类型 */
+  t: EventEnum.DIRECT_MESSAGE_DELETE
+  /** 事件内容 */
+  d: any
 }
 
 /**
@@ -500,14 +600,180 @@ export interface C2CMsgReceiveEvent extends BaseEvent {
 }
 
 /**
+ * 频道创建事件
+ */
+export interface GuildCreateEvent extends BaseEvent {
+  t: EventEnum.GUILD_CREATE
+  d: {
+    id?: string
+    guild_id?: string
+    name?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 频道更新事件
+ */
+export interface GuildUpdateEvent extends BaseEvent {
+  t: EventEnum.GUILD_UPDATE
+  d: {
+    id?: string
+    guild_id?: string
+    name?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 频道删除事件
+ */
+export interface GuildDeleteEvent extends BaseEvent {
+  t: EventEnum.GUILD_DELETE
+  d: {
+    id?: string
+    guild_id?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 子频道创建事件
+ */
+export interface ChannelCreateEvent extends BaseEvent {
+  t: EventEnum.CHANNEL_CREATE
+  d: {
+    id?: string
+    channel_id?: string
+    guild_id?: string
+    guildId?: string
+    name?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 子频道更新事件
+ */
+export interface ChannelUpdateEvent extends BaseEvent {
+  t: EventEnum.CHANNEL_UPDATE
+  d: {
+    id?: string
+    channel_id?: string
+    guild_id?: string
+    guildId?: string
+    name?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 子频道删除事件
+ */
+export interface ChannelDeleteEvent extends BaseEvent {
+  t: EventEnum.CHANNEL_DELETE
+  d: {
+    id?: string
+    channel_id?: string
+    guild_id?: string
+    guildId?: string
+    [key: string]: any
+  }
+}
+
+/**
+ * 频道成员加入事件
+ */
+export interface GuildMemberAddEvent extends BaseEvent {
+  t: EventEnum.GUILD_MEMBER_ADD
+  d: {
+    guild_id?: string
+    member?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    user?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    [key: string]: any
+  }
+}
+
+/**
+ * 频道成员更新事件
+ */
+export interface GuildMemberUpdateEvent extends BaseEvent {
+  t: EventEnum.GUILD_MEMBER_UPDATE
+  d: {
+    guild_id?: string
+    member?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    user?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    [key: string]: any
+  }
+}
+
+/**
+ * 频道成员移除事件
+ */
+export interface GuildMemberRemoveEvent extends BaseEvent {
+  t: EventEnum.GUILD_MEMBER_REMOVE
+  d: {
+    guild_id?: string
+    member?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    user?: {
+      id?: string
+      user_openid?: string
+      [key: string]: any
+    }
+    [key: string]: any
+  }
+}
+
+/**
+ * 消息表态添加事件
+ */
+export interface MessageReactionAddEvent extends BaseEvent {
+  t: EventEnum.MESSAGE_REACTION_ADD
+  d: any
+}
+
+/**
+ * 消息表态移除事件
+ */
+export interface MessageReactionRemoveEvent extends BaseEvent {
+  t: EventEnum.MESSAGE_REACTION_REMOVE
+  d: any
+}
+
+/**
  * 所有事件
  */
 export type Event = ReadyEvent
   | ResumedEvent
   | C2CMsgEvent
+  | C2CMessageDeleteEvent
   | GroupMsgEvent
+  | GroupMessageDeleteEvent
   | GuildMsgEvent
   | DirectMsgEvent
+  | GuildMessageDeleteEvent
+  | PublicMessageDeleteEvent
+  | DirectMessageDeleteEvent
   | GroupAddRobotEvent
   | GroupDelRobotEvent
   | GroupMsgRejectEvent
@@ -516,3 +782,14 @@ export type Event = ReadyEvent
   | FriendDelEvent
   | C2CMsgRejectEvent
   | C2CMsgReceiveEvent
+  | GuildCreateEvent
+  | GuildUpdateEvent
+  | GuildDeleteEvent
+  | ChannelCreateEvent
+  | ChannelUpdateEvent
+  | ChannelDeleteEvent
+  | GuildMemberAddEvent
+  | GuildMemberUpdateEvent
+  | GuildMemberRemoveEvent
+  | MessageReactionAddEvent
+  | MessageReactionRemoveEvent

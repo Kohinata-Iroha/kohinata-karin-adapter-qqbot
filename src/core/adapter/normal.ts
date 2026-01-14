@@ -5,6 +5,59 @@ import { AdapterQQBot } from '@/core/adapter/adapter'
 import { SendGuildMsg, SendQQMsg } from '@/core/api/types'
 import type { Contact, ElementTypes, Message, SendMsgResults } from 'node-karin'
 
+/**
+ * 检测图片类型并返回文件名和 Content-Type
+ * @param buffer 图片 buffer
+ * @param filePath 文件路径（可选，用于提取扩展名）
+ * @returns 文件名和 Content-Type
+ */
+function detectImageType (buffer: Buffer, filePath?: string): { filename: string, contentType: string } {
+  // 优先从文件路径提取扩展名
+  if (filePath) {
+    const ext = filePath.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)?.[1]
+    if (ext) {
+      const mimeMap: Record<string, string> = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        webp: 'image/webp'
+      }
+      return {
+        filename: `image.${ext}`,
+        contentType: mimeMap[ext] || 'image/jpeg'
+      }
+    }
+  }
+
+  // 根据 buffer 的魔数检测图片类型
+  const header = buffer.slice(0, 12)
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+    return { filename: 'image.png', contentType: 'image/png' }
+  }
+
+  // JPEG: FF D8 FF
+  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+    return { filename: 'image.jpg', contentType: 'image/jpeg' }
+  }
+
+  // GIF: 47 49 46 38
+  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) {
+    return { filename: 'image.gif', contentType: 'image/gif' }
+  }
+
+  // WebP: 52 49 46 46 ... 57 45 42 50
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46 &&
+    header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) {
+    return { filename: 'image.webp', contentType: 'image/webp' }
+  }
+
+  // 默认返回 JPEG
+  return { filename: 'image.jpg', contentType: 'image/jpeg' }
+}
+
 /** 正常发送消息 */
 export class AdapterQQBotNormal extends AdapterQQBot {
   async srcReply (e: Message, elements: ElementTypes[]) {
@@ -67,6 +120,12 @@ export class AdapterQQBotNormal extends AdapterQQBot {
 
       if (v.type === 'image') {
         list.image.push(v.file)
+        continue
+      }
+
+      if (v.type === 'reply') {
+        // QQ C2C/群聊暂未直接支持引用，使用被动消息 msg_id 兼容以避免无意义的告警日志
+        if (!list.pasmsg.msg_id) list.pasmsg.msg_id = v.messageId
         continue
       }
 
@@ -243,11 +302,16 @@ export class AdapterQQBotNormal extends AdapterQQBot {
       if (list.imageUrls.length) {
         const url = list.imageUrls.shift()
         list.list.unshift(this.super.GuildMsgOptions('text', list.content.join(''), url))
-      } if (list.imageFiles.length) {
-        const buffer = await common.buffer(list.imageFiles.shift()!)
+      } else if (list.imageFiles.length) {
+        const file = list.imageFiles.shift()!
+        const buffer = await common.buffer(file)
+        const { filename, contentType } = detectImageType(buffer, file)
         const formData = new FormData()
         formData.append('content', list.content.join(''))
-        formData.append('file_image', buffer)
+        formData.append('file_image', buffer, {
+          filename,
+          contentType
+        })
         list.list.unshift(formData)
       } else {
         list.list.unshift(this.super.GuildMsgOptions('text', list.content.join('')))
@@ -260,8 +324,12 @@ export class AdapterQQBotNormal extends AdapterQQBot {
 
     for (const file of list.imageFiles) {
       const buffer = await common.buffer(file)
+      const { filename, contentType } = detectImageType(buffer, file)
       const formData = new FormData()
-      formData.append('file_image', buffer)
+      formData.append('file_image', buffer, {
+        filename,
+        contentType
+      })
       list.list.push(formData)
     }
 

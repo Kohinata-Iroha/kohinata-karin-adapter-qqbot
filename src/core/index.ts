@@ -13,7 +13,23 @@ import { onGroupAddRobot, onGroupDelRobot } from '@/core/event/notice'
 import { createWebSocketConnection, stopWebSocketConnection } from '@/connection/webSocket'
 
 import type { QQBotConfig } from '@/types/config'
-import type { Event } from '@/types/event'
+import type {
+  Event,
+  GuildCreateEvent,
+  GuildUpdateEvent,
+  GuildDeleteEvent,
+  ChannelCreateEvent,
+  ChannelUpdateEvent,
+  ChannelDeleteEvent,
+  GuildMemberAddEvent,
+  GuildMemberUpdateEvent,
+  GuildMemberRemoveEvent,
+  MessageReactionAddEvent,
+  MessageReactionRemoveEvent,
+  GuildMessageDeleteEvent,
+  PublicMessageDeleteEvent,
+  DirectMessageDeleteEvent
+} from '@/types/event'
 
 /**
  * 追蹤已創建的 Bot 實例（以 appId 為唯一鍵）。
@@ -28,7 +44,7 @@ type BotInstance = {
   /** 已註冊的類型（避免配置切換導致重複註冊） */
   registeredType: 'webSocketClient' | 'http' | null
 }
-const botInstances = new Map<string, BotInstance>()
+export const botInstances = new Map<string, BotInstance>()
 
 /**
  * 初始化Bot列表
@@ -196,9 +212,123 @@ export const createEvent = (
       return onFriendMsg(client, event)
     case EventEnum.MESSAGE_CREATE:
     case EventEnum.AT_MESSAGE_CREATE:
+      // 频道消息（公域/私域）
+      client.logger('debug', `收到频道消息事件: ${JSON.stringify(event.d || {})}`)
       return onChannelMsg(client, event)
+    case EventEnum.GUILD_CREATE: {
+      const d = (event as GuildCreateEvent).d || {}
+      const gid = d.id || d.guild_id || 'unknown'
+      const name = d.name || ''
+      client.logger('info', `机器人加入频道: [${gid}] ${name}`)
+      return
+    }
+    case EventEnum.GUILD_UPDATE: {
+      const d = (event as GuildUpdateEvent).d || {}
+      const gid = d.id || d.guild_id || 'unknown'
+      client.logger('info', `频道资料更新: [${gid}] ${d.name || ''}`)
+      return
+    }
+    case EventEnum.GUILD_DELETE: {
+      const d = (event as GuildDeleteEvent).d || {}
+      const gid = d.id || d.guild_id || 'unknown'
+      client.logger('info', `机器人退出频道: [${gid}]`)
+      return
+    }
+    case EventEnum.CHANNEL_CREATE: {
+      const d = (event as ChannelCreateEvent).d || {}
+      const cid = d.id || d.channel_id || 'unknown'
+      const gid = d.guild_id || d.guildId || 'unknown'
+      client.logger('info', `子频道创建: [${cid}] 所属频道: [${gid}] ${d.name || ''}`)
+      return
+    }
+    case EventEnum.CHANNEL_UPDATE: {
+      const d = (event as ChannelUpdateEvent).d || {}
+      const cid = d.id || d.channel_id || 'unknown'
+      const gid = d.guild_id || d.guildId || 'unknown'
+      client.logger('info', `子频道更新: [${cid}] 所属频道: [${gid}] ${d.name || ''}`)
+      return
+    }
+    case EventEnum.CHANNEL_DELETE: {
+      const d = (event as ChannelDeleteEvent).d || {}
+      const cid = d.id || d.channel_id || 'unknown'
+      const gid = d.guild_id || d.guildId || 'unknown'
+      client.logger('info', `子频道删除: [${cid}] 所属频道: [${gid}]`)
+      return
+    }
+    case EventEnum.GUILD_MEMBER_ADD: {
+      const d = (event as GuildMemberAddEvent).d || {}
+      const member = d.member || d.user || {}
+      const uid = member.id || member.user_openid || 'unknown'
+      const gid = d.guild_id || 'unknown'
+      client.logger('info', `成员加入频道: [${uid}] guild: [${gid}]`)
+      return
+    }
+    case EventEnum.GUILD_MEMBER_UPDATE: {
+      const d = (event as GuildMemberUpdateEvent).d || {}
+      const member = d.member || d.user || {}
+      const uid = member.id || member.user_openid || 'unknown'
+      const gid = d.guild_id || 'unknown'
+      client.logger('info', `成员资料更新: [${uid}] guild: [${gid}]`)
+      return
+    }
+    case EventEnum.GUILD_MEMBER_REMOVE: {
+      const d = (event as GuildMemberRemoveEvent).d || {}
+      const member = d.member || d.user || {}
+      const uid = member.id || member.user_openid || 'unknown'
+      const gid = d.guild_id || 'unknown'
+      client.logger('info', `成员移除: [${uid}] guild: [${gid}]`)
+      return
+    }
+    case EventEnum.MESSAGE_REACTION_ADD: {
+      const d = (event as MessageReactionAddEvent).d || {}
+      client.logger('info', `消息表态添加: ${JSON.stringify(d)}`)
+      return
+    }
+    case EventEnum.MESSAGE_REACTION_REMOVE: {
+      const d = (event as MessageReactionRemoveEvent).d || {}
+      client.logger('info', `消息表态移除: ${JSON.stringify(d)}`)
+      return
+    }
     case EventEnum.DIRECT_MESSAGE_CREATE:
       return onDirectMsg(client, event)
+    case EventEnum.MESSAGE_DELETE: {
+      // 頻道撤回事件（私域）：
+      const d = (event as GuildMessageDeleteEvent).d
+      const msg = d?.message || {}
+      const author = msg?.author || {}
+      const userId = author.id || 'unknown'
+      const username = author.username || ''
+      const messageId = msg.id || 'unknown'
+      client.logger('info', `频道用户撤回: [${userId}(${username})] ${messageId}`)
+      return
+    }
+    case EventEnum.PUBLIC_MESSAGE_DELETE: {
+      // 頻道撤回事件（公域）：
+      const d = (event as PublicMessageDeleteEvent).d
+      const msg = d?.message || {}
+      const author = msg?.author || {}
+      const userId = author.id || 'unknown'
+      const username = author.username || ''
+      const messageId = msg.id || 'unknown'
+      client.logger('info', `频道用户撤回: [${userId}(${username})] ${messageId}`)
+      return
+    }
+    case EventEnum.DIRECT_MESSAGE_DELETE: {
+      // 頻道私信撤回事件：
+      const d = (event as DirectMessageDeleteEvent).d
+      const msg = d?.message || {}
+      const author = msg?.author || {}
+      const userId = author.id || 'unknown'
+      const username = author.username || ''
+      const messageId = msg.id || 'unknown'
+      client.logger('info', `频道私信用户撤回: [${userId}(${username})] ${messageId}`)
+      return
+    }
+    case EventEnum.C2C_MESSAGE_DELETE:
+    case EventEnum.GROUP_AT_MESSAGE_DELETE:
+      // 好友/群聊撤回事件：當前版本僅做日誌標記（QQ開放平台暫未提供此類事件）
+      logger.debug('[QQBot]', `收到撤回事件: ${event.t} ${JSON.stringify(event.d || {})}`)
+      return
     case EventEnum.GROUP_ADD_ROBOT:
       return onGroupAddRobot(client, event)
     case EventEnum.GROUP_DEL_ROBOT:
