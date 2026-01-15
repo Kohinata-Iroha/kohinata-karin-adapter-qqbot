@@ -205,6 +205,11 @@ export const createEvent = (
   client: AdapterQQBotNormal | AdapterQQBotMarkdown,
   event: Event
 ): void => {
+  // 统一记录所有事件的完整数据（READY 和 RESUMED 除外，它们已在 WebSocket 连接中处理）
+  if (event.t !== EventEnum.READY && event.t !== EventEnum.RESUMED) {
+    client.logger('debug', `[事件] ${event.t}:`, JSON.stringify(event, null, 2))
+  }
+
   switch (event.t) {
     case EventEnum.READY:
       // READY 事件已在 WebSocket 连接中处理，这里静默处理
@@ -219,7 +224,6 @@ export const createEvent = (
     case EventEnum.MESSAGE_CREATE:
     case EventEnum.AT_MESSAGE_CREATE:
       // 频道消息（公域/私域）
-      client.logger('debug', `收到频道消息事件: ${JSON.stringify(event.d || {})}`)
       return onChannelMsg(client, event)
     case EventEnum.GUILD_CREATE: {
       const d = (event as GuildCreateEvent).d || {}

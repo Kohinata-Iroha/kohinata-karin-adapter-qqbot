@@ -99,10 +99,9 @@ export const onGroupMsgReject = (client: AdapterQQBot, event: GroupMsgRejectEven
  * @param event 事件
  */
 export const onFriendAdd = (client: AdapterQQBot, event: FriendAddEvent) => {
-  const selfId = client.selfId
   const userId = event.d.openid
   const contact = karin.contactFriend(userId)
-  const sender = karin.friendSender(userId, '')
+  const sender = karin.friendSender(userId, 'unknown')
   const eventId = event.id
   const srcReply: SrcReply = (elements) => client.sendMsg(contact, [...elements, segment.pasmsg(eventId, 'event')])
 
@@ -114,7 +113,7 @@ export const onFriendAdd = (client: AdapterQQBot, event: FriendAddEvent) => {
     bot: client,
     rawEvent: event,
     time: event.d.timestamp,
-    content: { targetId: selfId },
+    content: { targetId: userId },
   })
 }
 
@@ -124,10 +123,9 @@ export const onFriendAdd = (client: AdapterQQBot, event: FriendAddEvent) => {
  * @param event 事件
  */
 export const onFriendDel = (client: AdapterQQBot, event: FriendDelEvent) => {
-  const selfId = client.selfId
   const userId = event.d.openid
   const contact = karin.contactFriend(userId)
-  const sender = karin.friendSender(userId, '')
+  const sender = karin.friendSender(userId, 'unknown')
   const eventId = event.id
   const srcReply: SrcReply = (elements) => client.sendMsg(contact, [...elements, segment.pasmsg(eventId, 'event')])
 
@@ -139,7 +137,7 @@ export const onFriendDel = (client: AdapterQQBot, event: FriendDelEvent) => {
     bot: client,
     rawEvent: event,
     time: event.d.timestamp,
-    content: { targetId: selfId },
+    content: { targetId: userId },
   })
 }
 
