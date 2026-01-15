@@ -37,7 +37,8 @@ export type GuildSend = (peer: string,
 export type Pasmsg<T extends 'qq' | 'guild'> = {
   type: 'msg' | 'event',
   msg_id: string,
-  msg_seq: T extends 'qq' ? number : never
+  msg_seq: T extends 'qq' ? number : never,
+  is_wakeup?: boolean
 }
 export interface Grouping<T extends 'qq' | 'guild'> {
   /** 文本 */

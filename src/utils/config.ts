@@ -23,7 +23,7 @@ export const pkg = () => requireFileSync(`${dirPath}/package.json`)
 
 /** 用户配置的插件名称 */
 const pluginName = pkg().name
-/** 用户配置（统一使用 scope 目录结构：@kohinata/adapter-qqbot/config） */
+/** 用户配置（统一使用 scope 目录结构：@kohinata/karin-adapter-qqbot/config） */
 const dirConfig = path.join(karinPathBase, pluginName, 'config')
 /** 旧路径兼容：@karinjs/@kohinata-adapter-qqbot/config */
 const legacyDirConfig = path.join(karinPathBase, pkg().name.replace(/\//g, '-'), 'config')

@@ -89,7 +89,14 @@ export class AdapterQQBotMarkdown extends AdapterQQBot {
 
       if (v.type === 'pasmsg') {
         if (v.source === 'event') list.pasmsg.type = 'event'
-        list.pasmsg.msg_id = v.id
+        // 检查是否有 is_wakeup 属性（仅好友场景支持）
+        const pasmsgWithWakeup = v as any
+        if (pasmsgWithWakeup.is_wakeup && contact.scene === 'friend') {
+          list.pasmsg.is_wakeup = true
+          list.pasmsg.msg_id = '' // is_wakeup 与 msg_id/event_id 互斥
+        } else {
+          list.pasmsg.msg_id = v.id
+        }
         continue
       }
 
@@ -131,6 +138,13 @@ export class AdapterQQBotMarkdown extends AdapterQQBot {
 
     /** 处理被动消息 */
     const pasmsg = (() => {
+      // 如果设置了 is_wakeup 且是好友场景，直接返回设置 is_wakeup 的函数
+      if (list.pasmsg.is_wakeup && contact.scene === 'friend') {
+        return (item: SendQQMsg) => {
+          item.is_wakeup = true
+        }
+      }
+
       if (!list.pasmsg.msg_id) return () => ''
 
       list.pasmsg.msg_seq++

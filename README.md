@@ -1,4 +1,4 @@
-# @kohinata/adapter-qqbot
+# @kohinata/karin-adapter-qqbot
 
 QQ机器人适配器插件，为 Karin 框架提供 QQ 机器人支持。
 
@@ -18,19 +18,19 @@ QQ机器人适配器插件，为 Karin 框架提供 QQ 机器人支持。
 ### 使用 pnpm（推荐）
 
 ```bash
-pnpm add @kohinata/adapter-qqbot -w
+pnpm add @kohinata/karin-adapter-qqbot -w
 ```
 
 ### 使用 npm
 
 ```bash
-npm install @kohinata/adapter-qqbot
+npm install @kohinata/karin-adapter-qqbot
 ```
 
 ### 使用 yarn
 
 ```bash
-yarn add @kohinata/adapter-qqbot
+yarn add @kohinata/karin-adapter-qqbot
 ```
 
 ## 快速开始
@@ -45,7 +45,7 @@ yarn add @kohinata/adapter-qqbot
 
 1. **安装插件**
    ```bash
-   pnpm add @kohinata/adapter-qqbot -w
+   pnpm add @kohinata/karin-adapter-qqbot -w
    ```
 
 2. **获取机器人信息**
@@ -86,7 +86,7 @@ yarn add @kohinata/adapter-qqbot
 
 ### 第二步：创建配置文件
 
-配置文件位置：`@kohinata/@kohinata-adapter-qqbot/config/config.json`
+配置文件位置：`@kohinata/karin-adapter-qqbot/config/config.json`
 
 如果文件不存在，插件会自动创建一个空的配置文件。
 
@@ -666,7 +666,7 @@ karin-plugin-adapter-qqbot/
 ### 发送群消息
 
 ```typescript
-import type { AdapterQQBot } from '@kohinata/adapter-qqbot'
+import type { AdapterQQBot } from '@kohinata/karin-adapter-qqbot'
 
 // 在你的插件中使用
 export class MyPlugin extends plugin {
@@ -696,7 +696,7 @@ await bot.recallMsg(e.contact, messageId)
 
 ```bash
 # 查看配置文件
-cat @kohinata/@kohinata-adapter-qqbot/config/config.json
+cat @kohinata/karin-adapter-qqbot/config/config.json
 ```
 
 #### 2. 启动服务
